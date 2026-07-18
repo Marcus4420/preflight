@@ -507,7 +507,8 @@ body {
 }
 
 .diff-empty-value {
-  color: var(--ink-faint);
+  color: var(--ink-dim);
+  font-style: italic;
   font-family: var(--font-mono);
   font-size: 0.75rem;
   padding: 0.5rem 0;
