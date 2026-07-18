@@ -1,0 +1,8 @@
+node_modules/
+dist/
+web/dist/
+*.tfplan
+*.tsbuildinfo
+.terraform/
+.terraform.lock.hcl
+*.log
