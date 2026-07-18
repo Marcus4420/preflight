@@ -435,7 +435,9 @@ body {
 }
 
 .diff-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+  align-items: start;
   gap: 0.6rem;
   padding: 0.35rem 0.6rem;
   border-left: 2px solid transparent;
@@ -450,15 +452,58 @@ body {
   background: var(--caution-dim);
 }
 
+.diff-row-block {
+  grid-template-columns: 1fr;
+  gap: 0.3rem;
+}
+
 .diff-key {
   color: var(--ink-dim);
-  flex-shrink: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .diff-value {
   color: var(--ink);
   word-break: break-word;
   overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.diff-rule-list,
+.diff-nested {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.diff-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.diff-rule-summary {
+  color: var(--ink);
+}
+
+.diff-rule-desc {
+  color: var(--ink-dim);
+  font-size: 0.68rem;
+}
+
+.diff-nested-item {
+  padding: 0.25rem 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
 }
 
 .diff-empty-value {

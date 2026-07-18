@@ -38,6 +38,7 @@ export default function GraphView({ plan, onSelect }: GraphViewProps) {
       edges={edges}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
+      nodesDraggable={false}
       fitView
       fitViewOptions={{ padding: 0.3 }}
       colorMode="dark"
