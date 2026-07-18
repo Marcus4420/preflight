@@ -1,8 +1,11 @@
 import { useMemo } from 'react'
-import { ReactFlow, Background, Controls, MiniMap, type Node } from '@xyflow/react'
+import { ReactFlow, Background, BackgroundVariant, Controls, type Node } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import type { PlanResult } from '../types'
 import { buildGraph, type GraphNodeData } from './buildGraph'
+import ResourceNode from './ResourceNode'
+
+const nodeTypes = { resource: ResourceNode }
 
 interface GraphViewProps {
   plan: PlanResult
@@ -16,14 +19,17 @@ export default function GraphView({ plan, onSelect }: GraphViewProps) {
     <ReactFlow
       nodes={nodes}
       edges={edges}
+      nodeTypes={nodeTypes}
       fitView
+      fitViewOptions={{ padding: 0.3 }}
       colorMode="dark"
+      minZoom={0.2}
+      proOptions={{ hideAttribution: true }}
       onNodeClick={(_event, node: Node<GraphNodeData>) => onSelect(node.id)}
       onPaneClick={() => onSelect(null)}
     >
-      <Background color="#23262b" gap={20} />
-      <Controls />
-      <MiniMap pannable zoomable style={{ background: '#14171b' }} />
+      <Background variant={BackgroundVariant.Dots} color="#1a2129" gap={22} size={1} />
+      <Controls showInteractive={false} />
     </ReactFlow>
   )
 }
