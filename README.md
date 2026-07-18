@@ -17,8 +17,11 @@ docker compose up --build
 ```
 
 Then open http://localhost:4700. By default this runs against the bundled
-`examples/telemetry-pipeline` example — edit the `volumes:` mount in `docker-compose.yml` to
-point at your own Terraform directory instead. `docker compose down` tears everything down.
+`examples/wordpress-fargate` example — a WordPress-on-Fargate stack (VPC, ALB, ECS Fargate,
+Aurora Serverless, EFS for shared `wp-content`, CloudFront, Route53) with 37 resources and 50
+real dependency edges, good for seeing the graph actually earn its keep. Edit the `volumes:`
+mount in `docker-compose.yml` to point at your own Terraform directory instead. `docker compose
+down` tears everything down.
 
 Note: `terraform init` inside the container writes `.terraform/` into the mounted directory as
 the container's user (root by default). Harmless for just running preflight, but can cause
@@ -43,7 +46,7 @@ tab with the visualization. Floci is stopped again on exit, unless it was alread
 before `preflight` started it.
 
 ```
-cd examples/telemetry-pipeline
+cd examples/wordpress-fargate
 node ../../dist/cli.js
 ```
 

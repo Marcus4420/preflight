@@ -20,5 +20,5 @@ services:
       - "4700:4700"
     volumes:
       # Point this at your own Terraform directory.
-      - ./examples/telemetry-pipeline:/workspace
+      - ./examples/wordpress-fargate:/workspace
     working_dir: /workspace/
