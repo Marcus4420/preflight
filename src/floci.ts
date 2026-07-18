@@ -33,6 +33,26 @@ export async function stopFloci(): Promise<void> {
   await execFileAsync('floci', ['stop'])
 }
 
+/** Polls a Floci health endpoint until it responds ok, for when Floci is managed externally
+ * (e.g. as a sibling Compose service) rather than started by this process. */
+export async function waitForFlociReady(healthUrl: string, timeoutMs = 30_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  let lastError: unknown
+
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(healthUrl)
+      if (res.ok) return
+      lastError = new Error(`${healthUrl} responded with ${res.status}`)
+    } catch (err) {
+      lastError = err
+    }
+    await new Promise((r) => setTimeout(r, 1000))
+  }
+
+  throw new Error(`Timed out waiting for Floci at ${healthUrl}: ${lastError}`)
+}
+
 export async function getFlociEnv(): Promise<Record<string, string>> {
   const { stdout } = await execFileAsync('floci', ['env'])
   const vars: Record<string, string> = {}
