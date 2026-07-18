@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { PlanAction, PlanEdge, PlanNode, PlanResult, TerraformPlanJson } from './types.js'
@@ -10,6 +10,10 @@ const MAX_BUFFER = 1024 * 1024 * 64
 
 async function run(cwd: string, env: NodeJS.ProcessEnv, args: string[]) {
   return execFileAsync('terraform', args, { cwd, env, maxBuffer: MAX_BUFFER })
+}
+
+function hasTerraformFiles(cwd: string): boolean {
+  return readdirSync(cwd).some((f) => f.endsWith('.tf') || f.endsWith('.tf.json'))
 }
 
 export async function ensureInitialized(cwd: string, env: NodeJS.ProcessEnv): Promise<void> {
@@ -59,6 +63,12 @@ function parseGraphEdges(dot: string, knownIds: Set<string>): PlanEdge[] {
 }
 
 export async function runPlan(cwd: string, env: NodeJS.ProcessEnv): Promise<PlanResult> {
+  if (!hasTerraformFiles(cwd)) {
+    throw new Error(
+      `No Terraform files (.tf) found in ${cwd}\nRun preflight from a directory containing your Terraform config.`,
+    )
+  }
+
   await ensureInitialized(cwd, env)
 
   const planFile = join(cwd, 'preflight.tfplan')
