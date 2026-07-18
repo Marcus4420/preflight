@@ -18,7 +18,7 @@ export default function ResourceNode({ data }: NodeProps<ResourceNodeType>) {
 
   return (
     <div className={`resource-node action-${data.action}`} title={data.label}>
-      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Top} />
       <div className="resource-node-icon">
         <Icon width={16} height={16} />
       </div>
@@ -27,7 +27,7 @@ export default function ResourceNode({ data }: NodeProps<ResourceNodeType>) {
         <span className="resource-node-name">{data.label.split('.').slice(1).join('.')}</span>
       </div>
       <span className="resource-node-lamp" title={ACTION_LABEL[data.action]} />
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Bottom} />
     </div>
   )
 }

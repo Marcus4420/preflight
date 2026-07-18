@@ -293,27 +293,43 @@ body {
 
 .react-flow__edge-path {
   stroke: var(--ink-faint);
-  stroke-width: 1.5;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.react-flow__edge {
+  z-index: 0;
+}
+.react-flow__node {
+  z-index: 1;
 }
 
 .plan-edge.action-create .react-flow__edge-path {
   stroke: var(--go);
-  opacity: 0.55;
+  opacity: 0.85;
 }
 .plan-edge.action-update .react-flow__edge-path {
   stroke: var(--caution);
-  opacity: 0.55;
+  opacity: 0.85;
 }
 .plan-edge.action-delete .react-flow__edge-path,
 .plan-edge.action-replace .react-flow__edge-path {
   stroke: var(--stop);
-  opacity: 0.55;
+  opacity: 0.85;
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 3;
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .plan-edge .react-flow__edge-path {
-    stroke-dasharray: 3 5;
-    animation: flow 1.2s linear infinite;
+    stroke-dasharray: 4 4;
+    animation: flow 1s linear infinite;
   }
   @keyframes flow {
     to {
