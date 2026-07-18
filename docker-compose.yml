@@ -1,0 +1,24 @@
+services:
+  floci:
+    image: floci/floci:latest
+    ports:
+      - "4566:4566"
+
+  preflight:
+    build: .
+    depends_on:
+      - floci
+    environment:
+      AWS_ENDPOINT_URL: http://floci:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      PREFLIGHT_EXTERNAL_FLOCI: "true"
+      PREFLIGHT_FLOCI_HEALTH_URL: http://floci:4566/_floci/health
+      PREFLIGHT_NO_OPEN: "true"
+    ports:
+      - "4700:4700"
+    volumes:
+      # Point this at your own Terraform directory.
+      - ./examples/telemetry-pipeline:/workspace
+    working_dir: /workspace/
