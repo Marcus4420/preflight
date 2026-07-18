@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { existsSync, readdirSync } from 'node:fs'
-import { unlink } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { readdir, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { PlanAction, PlanEdge, PlanNode, PlanResult, TerraformPlanJson } from './types.js'
 
@@ -12,12 +12,16 @@ async function run(cwd: string, env: NodeJS.ProcessEnv, args: string[]) {
   return execFileAsync('terraform', args, { cwd, env, maxBuffer: MAX_BUFFER })
 }
 
-function hasTerraformFiles(cwd: string): boolean {
-  return readdirSync(cwd).some((f) => f.endsWith('.tf') || f.endsWith('.tf.json'))
+async function hasTerraformFiles(cwd: string): Promise<boolean> {
+  const files = await readdir(cwd)
+  return files.some((f) => f.endsWith('.tf') || f.endsWith('.tf.json'))
 }
 
+/** Always (re-)runs init rather than trusting a `.terraform` dir left over from a previous
+ * run: it's cheap when the cache is already valid, and it self-heals cases like a provider
+ * cache from a different platform (e.g. switching between a native run and a container run
+ * against the same bind-mounted directory). */
 export async function ensureInitialized(cwd: string, env: NodeJS.ProcessEnv): Promise<void> {
-  if (existsSync(join(cwd, '.terraform'))) return
   await run(cwd, env, ['init', '-input=false'])
 }
 
@@ -63,7 +67,7 @@ function parseGraphEdges(dot: string, knownIds: Set<string>): PlanEdge[] {
 }
 
 export async function runPlan(cwd: string, env: NodeJS.ProcessEnv): Promise<PlanResult> {
-  if (!hasTerraformFiles(cwd)) {
+  if (!(await hasTerraformFiles(cwd))) {
     throw new Error(
       `No Terraform files (.tf) found in ${cwd}\nRun preflight from a directory containing your Terraform config.`,
     )
