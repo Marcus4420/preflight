@@ -9,7 +9,7 @@ const elk = new ELK()
 
 const ACTION_COLORS: Record<string, string> = {
   create: '#35d488',
-  update: '#f0a955',
+  update: '#e0a84a',
   delete: '#ef5350',
   replace: '#ef5350',
   'no-op': '#3d454f',

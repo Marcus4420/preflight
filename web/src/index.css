@@ -12,11 +12,11 @@
 
   --go: #35d488;
   --go-dim: rgba(53, 212, 136, 0.14);
-  --caution: #f0a955;
-  --caution-dim: rgba(240, 169, 85, 0.14);
+  --caution: #e0a84a;
+  --caution-dim: rgba(224, 168, 74, 0.14);
   --stop: #ef5350;
   --stop-dim: rgba(239, 83, 80, 0.14);
-  --accent: #f0a955;
+  --accent: #e0a84a;
 
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
