@@ -1,5 +1,5 @@
 import type { PlanNode } from '../types'
-import { iconForResourceType } from '../graph/icons'
+import { iconForResourceType, labelForResourceType } from '../graph/icons'
 
 function diffKeys(before: Record<string, unknown> | null, after: Record<string, unknown> | null): Set<string> {
   const keys = new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})])
@@ -43,6 +43,7 @@ export default function DiffPanel({ node }: { node: PlanNode | null }) {
 
   const changed = diffKeys(node.before, node.after)
   const Icon = iconForResourceType(node.resourceType)
+  const label = labelForResourceType(node.resourceType)
 
   return (
     <div className="diff-panel">
@@ -51,7 +52,8 @@ export default function DiffPanel({ node }: { node: PlanNode | null }) {
         <div>
           <h2>{node.id}</h2>
           <p className="type">
-            {node.resourceType} <span className={`action-tag action-${node.action}`}>{node.action}</span>
+            {label} <span className="type-raw">({node.resourceType})</span>{' '}
+            <span className={`action-tag action-${node.action}`}>{node.action}</span>
           </p>
         </div>
       </div>

@@ -361,6 +361,10 @@ body {
   word-break: break-word;
 }
 
+.diff-header .type-raw {
+  color: var(--ink-faint);
+}
+
 .diff-header .type {
   font-family: var(--font-mono);
   font-size: 0.7rem;
