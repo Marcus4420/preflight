@@ -1,0 +1,53 @@
+# Temporary probe: can terraform plan run against Floci's Azure and GCP emulators at all?
+# Informs how multi-provider support gets wired into the CLI. Delete once answered.
+name: emulator-probe
+
+on:
+  push:
+    branches: [multi-cloud-probe]
+  workflow_dispatch:
+
+jobs:
+  gcp:
+    runs-on: ubuntu-latest
+    services:
+      floci-gcp:
+        image: floci/floci-gcp:latest
+        ports:
+          - 4588:4588
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - name: Probe emulator endpoints
+        run: |
+          curl -sf http://localhost:4588/_floci/health && echo "health OK" || echo "no /_floci/health"
+          curl -s http://localhost:4588/ | head -c 500 || true
+      - name: terraform plan against floci-gcp
+        working-directory: examples/gcp-pubsub-pipeline
+        run: |
+          terraform init -input=false
+          terraform plan -input=false
+
+  azure:
+    runs-on: ubuntu-latest
+    services:
+      floci-az:
+        image: floci/floci-az:latest
+        ports:
+          - 4577:4577
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - name: Probe emulator endpoints
+        run: |
+          curl -sf http://localhost:4577/_floci/health && echo "health OK" || echo "no /_floci/health"
+          curl -s "http://localhost:4577/metadata/endpoints?api-version=2022-09-01" | head -c 800 || true
+      - name: terraform plan against floci-az
+        working-directory: examples/azure-static-site
+        run: |
+          terraform init -input=false
+          terraform plan -input=false
