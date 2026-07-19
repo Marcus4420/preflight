@@ -73,10 +73,28 @@ provider "aws" {
 }
 ```
 
+## CI mode
+
+`--ci` runs the same plan headlessly and turns preflight into a merge gate:
+
+```
+npx terraform-preflight --ci --out preflight-report
+```
+
+- Writes a self-contained static report to `preflight-report/`: the same interactive graph
+  UI with the plan data inlined (`index.html`, open it anywhere - no server needed), plus a
+  machine-readable `plan.json`.
+- Exits `1` if the plan contains any change (add, change, or destroy), `0` if the plan is
+  clean - so an unexpected diff fails the pipeline.
+- Upload the report directory as a build artifact to give reviewers the clickable graph for
+  every PR.
+
+Run `npx terraform-preflight --help` for all options.
+
 ## Roadmap
 
-- **CI mode** - run headless, exit non-zero on unexpected changes, and post the plan summary
-  to a pull request, so preflight can gate merges instead of only running locally.
+- **PR comments** - post the plan summary (with a link to the report artifact) directly to a
+  pull request from CI mode.
 - **Multi-cloud** - Azure and GCP support alongside AWS, following whichever local emulator
   each provider ecosystem standardizes on.
 
@@ -88,8 +106,27 @@ npm run build
 node dist/cli.js
 ```
 
-`src/` is the CLI (Node + TypeScript): starts/stops Floci, runs and parses `terraform plan`,
-serves the visualization. `web/` is the frontend (Vite + React + TypeScript + `@xyflow/react`).
+### Project structure
+
+```
+src/                CLI (Node + TypeScript)
+  cli.ts            Entry point: flag parsing, mode selection, lifecycle/teardown
+  floci.ts          Start/stop/health-check the Floci emulator, read its env vars
+  terraform.ts      Run terraform init/plan/show/graph and parse into PlanResult
+  server.ts         Express server: static web UI + /api/plan (local mode)
+  staticExport.ts   Self-contained HTML report with the plan inlined (--ci mode)
+  types.ts          PlanResult and friends - the contract between CLI and UI
+
+web/                Frontend (Vite + React + @xyflow/react)
+  src/App.tsx       Root component: loads the plan (API or inlined), holds selection
+  src/components/   SummaryBar (add/change/destroy counts), DiffPanel (before/after)
+  src/graph/        The graph itself: ELK layout (buildGraph), custom node/edge
+                    renderers, resource-type icons and labels
+  src/types.ts      Mirror of src/types.ts on the CLI side
+
+examples/           Terraform configs to try preflight against
+docs/screenshots/   Images used in this README
+```
 
 ## License
 

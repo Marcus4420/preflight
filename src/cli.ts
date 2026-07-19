@@ -3,9 +3,55 @@ import open from 'open'
 import { checkFlociInstalled, startFloci, stopFloci, getFlociEnv, waitForFlociReady } from './floci.js'
 import { runPlan } from './terraform.js'
 import { startServer } from './server.js'
+import { exportStaticSite } from './staticExport.js'
+
+const USAGE = `Usage: terraform-preflight [options]
+
+Runs "terraform plan" against a local Floci emulator and visualizes the result.
+Run it from a directory containing your Terraform configuration.
+
+Options:
+  --ci           Headless mode for CI: write a static report instead of starting
+                 a server, and exit 1 if the plan contains any changes.
+  --out <dir>    Where --ci writes the report (default: preflight-report)
+  -h, --help     Show this help.
+
+Environment variables:
+  PREFLIGHT_EXTERNAL_FLOCI     Floci is managed externally (e.g. Docker Compose);
+                               wait for it instead of starting it.
+  PREFLIGHT_FLOCI_HEALTH_URL   Health endpoint to poll in external mode
+                               (default: http://localhost:4566/_floci/health)
+  PREFLIGHT_NO_OPEN            Don't open the browser automatically.`
+
+function parseCliOptions(argv: string[]): { ci: boolean; outDir: string } {
+  if (argv.includes('-h') || argv.includes('--help')) {
+    console.log(USAGE)
+    process.exit(0)
+  }
+
+  const unknown = argv.filter((arg, i) => {
+    if (arg === '--ci' || arg === '--out') return false
+    if (argv[i - 1] === '--out') return false
+    return true
+  })
+  if (unknown.length > 0) {
+    console.error(`Unknown option: ${unknown[0]}\n\n${USAGE}`)
+    process.exit(2)
+  }
+
+  const outFlagIndex = argv.indexOf('--out')
+  const outDir = outFlagIndex !== -1 ? argv[outFlagIndex + 1] : 'preflight-report'
+  if (outFlagIndex !== -1 && (!outDir || outDir.startsWith('--'))) {
+    console.error(`--out requires a directory argument\n\n${USAGE}`)
+    process.exit(2)
+  }
+
+  return { ci: argv.includes('--ci'), outDir }
+}
 
 const EXTERNAL_FLOCI = Boolean(process.env.PREFLIGHT_EXTERNAL_FLOCI)
 const NO_OPEN = Boolean(process.env.PREFLIGHT_NO_OPEN)
+const options = parseCliOptions(process.argv.slice(2))
 
 /** Gets Floci ready to use and returns a teardown function to call on exit. */
 async function ensureFloci(): Promise<() => Promise<void>> {
@@ -48,6 +94,15 @@ async function main() {
     console.log('Running terraform plan...')
     const plan = await runPlan(cwd, env)
     console.log(`Plan: ${plan.summary.add} to add, ${plan.summary.change} to change, ${plan.summary.destroy} to destroy.`)
+
+    if (options.ci) {
+      await exportStaticSite(plan, options.outDir)
+      console.log(`Report written to ${options.outDir}/ (open ${options.outDir}/index.html for the graph).`)
+      await teardown()
+      const hasChanges = plan.summary.add + plan.summary.change + plan.summary.destroy > 0
+      process.exitCode = hasChanges ? 1 : 0
+      return
+    }
 
     const { url, close } = await startServer(plan)
     if (NO_OPEN) {

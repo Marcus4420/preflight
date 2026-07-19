@@ -1,3 +1,6 @@
+// Mirror of the plan types in src/types.ts (the CLI side). Kept as a copy rather than a
+// shared package because the shape is small and changes rarely; update both if it does.
+
 export type PlanAction = 'create' | 'update' | 'delete' | 'replace' | 'no-op'
 
 export interface PlanNode {
