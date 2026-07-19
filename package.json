@@ -2,9 +2,24 @@
   "name": "terraform-preflight",
   "version": "0.1.0",
   "description": "Spin up a local AWS emulator (Floci), run a real terraform plan against it, and see the diff as an interactive graph before touching real infrastructure.",
+  "keywords": [
+    "terraform",
+    "plan",
+    "aws",
+    "emulator",
+    "visualization",
+    "infrastructure",
+    "ci"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Marcus4420/preflight.git"
+  },
+  "homepage": "https://github.com/Marcus4420/preflight#readme",
+  "bugs": "https://github.com/Marcus4420/preflight/issues",
   "type": "module",
   "bin": {
-    "terraform-preflight": "./dist/cli.js"
+    "terraform-preflight": "dist/cli.js"
   },
   "files": [
     "dist",
@@ -12,6 +27,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && npm run build --workspace=web",
+    "prepublishOnly": "npm run build",
     "dev:web": "npm run dev --workspace=web",
     "start": "node dist/cli.js"
   },
