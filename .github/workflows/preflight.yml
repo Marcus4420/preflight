@@ -1,0 +1,68 @@
+name: preflight
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+
+    services:
+      floci:
+        image: floci/floci:latest
+        ports:
+          - 4566:4566
+
+    env:
+      AWS_ENDPOINT_URL: http://localhost:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      PREFLIGHT_EXTERNAL_FLOCI: "true"
+      PREFLIGHT_FLOCI_HEALTH_URL: http://localhost:4566/_floci/health
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build preflight
+        run: |
+          npm ci
+          npm run build
+
+      - name: Run preflight against the example stack
+        working-directory: examples/wordpress-fargate
+        # The example plan creates 37 resources, so preflight exiting 1 is the
+        # expected, correct behavior here - this step verifies exactly that.
+        run: |
+          set +e
+          node ../../dist/cli.js --ci --out preflight-report
+          code=$?
+          set -e
+          if [ "$code" -ne 1 ]; then
+            echo "Expected exit code 1 (plan has changes), got $code"
+            exit 1
+          fi
+          test -f preflight-report/index.html
+          test -f preflight-report/plan.json
+          node -e "
+            const plan = require('./preflight-report/plan.json');
+            if (plan.summary.add < 1) throw new Error('Expected resources to add');
+            console.log('Report OK:', plan.summary.add, 'to add,', plan.nodes.length, 'nodes,', plan.edges.length, 'edges');
+          "
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: preflight-report
+          path: examples/wordpress-fargate/preflight-report/
