@@ -47,8 +47,10 @@ export async function waitForFlociReady(healthUrl: string, timeoutMs = 30_000): 
 
   while (Date.now() < deadline) {
     try {
+      // Any non-5xx response counts as ready: not every emulator exposes a health route
+      // (floci-gcp 404s on everything), but answering HTTP at all means it's up.
       const res = await fetch(healthUrl)
-      if (res.ok) return
+      if (res.status < 500) return
       lastError = new Error(`${healthUrl} responded with ${res.status}`)
     } catch (err) {
       lastError = err

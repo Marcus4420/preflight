@@ -33,7 +33,8 @@ export const PROVIDERS: Record<ProviderId, ProviderConfig> = {
   gcp: {
     id: 'gcp',
     flociSubcommand: ['gcp'],
-    defaultHealthUrl: 'http://localhost:4588/_floci/health',
+    // floci-gcp has no dedicated health route; any HTTP answer from the base URL means up.
+    defaultHealthUrl: 'http://localhost:4588/',
     terraformProviders: ['google', 'google-beta'],
     useFlociEnv: false,
   },
