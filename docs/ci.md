@@ -96,6 +96,18 @@ preflight:
       - infra/preflight-report/
 ```
 
+## Safety: pipelines that also hold real AWS credentials
+
+If preflight runs in a pipeline that deploys for real (so real `AWS_ACCESS_KEY_ID` /
+`AWS_SECRET_ACCESS_KEY` secrets exist), two layers keep the preflight step away from real AWS:
+
+1. **Built-in guard**: before running terraform, preflight replaces any AWS credentials in the
+   environment with dummy values and refuses to run at all if `AWS_ENDPOINT_URL` is not set.
+   A misconfigured job fails loudly instead of silently planning against your real account.
+2. **Scope your secrets anyway**: inject real credentials only into the job/step that applies
+   (per-step `env` on GitHub, protected variables or separate jobs on GitLab), not as
+   pipeline-wide variables. The preflight job needs no secrets at all.
+
 ## Notes
 
 - The Terraform config must target the emulator - see "Pointing Terraform at Floci" in the

@@ -77,6 +77,26 @@ async function ensureFloci(): Promise<() => Promise<void>> {
   }
 }
 
+/** Builds the environment terraform runs with, guaranteeing it can only ever talk to the
+ * emulator. Any real AWS credentials present in the surrounding environment (common on CI
+ * runners that also run apply jobs) are replaced with dummies, and an emulator endpoint is
+ * required — otherwise terraform would silently plan against real AWS. */
+function emulatorOnlyEnv(base: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  if (!base.AWS_ENDPOINT_URL) {
+    throw new Error(
+      'AWS_ENDPOINT_URL is not set, so terraform would talk to real AWS. ' +
+        'Point it at the Floci emulator (e.g. http://localhost:4566).',
+    )
+  }
+
+  const env = { ...base }
+  delete env.AWS_PROFILE
+  delete env.AWS_SESSION_TOKEN
+  env.AWS_ACCESS_KEY_ID = 'test'
+  env.AWS_SECRET_ACCESS_KEY = 'test'
+  return env
+}
+
 async function main() {
   const cwd = process.cwd()
   const teardownFloci = await ensureFloci()
@@ -89,7 +109,9 @@ async function main() {
   }
 
   try {
-    const env = EXTERNAL_FLOCI ? { ...process.env } : { ...process.env, ...(await getFlociEnv()) }
+    const env = emulatorOnlyEnv(
+      EXTERNAL_FLOCI ? { ...process.env } : { ...process.env, ...(await getFlociEnv()) },
+    )
 
     console.log('Running terraform plan...')
     const plan = await runPlan(cwd, env)
