@@ -37,17 +37,21 @@ jobs:
         image: floci/floci-az:latest
         ports:
           - 4577:4577
+        env:
+          FLOCI_AZ_TLS_ENABLED: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_wrapper: false
-      - name: Probe emulator endpoints
+      - name: Trust the emulator's TLS certificate
         run: |
-          curl -sf http://localhost:4577/_floci/health && echo "health OK" || echo "no /_floci/health"
-          curl -s "http://localhost:4577/metadata/endpoints?api-version=2022-09-01" | head -c 800 || true
+          curl -sf http://localhost:4577/_floci/tls-cert -o floci-az.crt
+          sudo cp floci-az.crt /usr/local/share/ca-certificates/
+          sudo update-ca-certificates
+          curl -sf "https://localhost:4577/metadata/endpoints?api-version=2022-09-01" | head -c 300; echo
       - name: terraform plan against floci-az
-        working-directory: examples/azure-static-site
+        working-directory: examples/azure-app-stack
         run: |
           terraform init -input=false
           terraform plan -input=false
