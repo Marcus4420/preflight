@@ -6,3 +6,4 @@ web/dist/
 .terraform/
 .terraform.lock.hcl
 *.log
+.claude/
