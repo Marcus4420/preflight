@@ -92,12 +92,27 @@ npx terraform-preflight --ci --out preflight-report
 Run `npx terraform-preflight --help` for all options. Ready-made GitHub Actions and GitLab CI
 recipes live in [docs/ci.md](docs/ci.md).
 
+## Azure and Google Cloud
+
+Preflight supports all three Floci emulators. The provider is detected from your Terraform
+config's `provider` blocks (override with `--provider aws|azure|gcp`), and the matching
+emulator is started: `floci` (port 4566), `floci az` (4577), or `floci gcp` (4588).
+
+- **GCP**: point the `google` provider's `*_custom_endpoint` settings at the emulator - see
+  [`examples/gcp-pubsub-pipeline`](examples/gcp-pubsub-pipeline/main.tf).
+- **Azure**: `azurerm` discovers the cloud over HTTPS, so run floci-az with
+  `FLOCI_AZ_TLS_ENABLED=true` and trust its runtime certificate
+  (`curl http://localhost:4577/_floci/tls-cert`), then set `environment = "stack"` and
+  `metadata_host` in the provider - see
+  [`examples/azure-app-stack`](examples/azure-app-stack/main.tf).
+
+Whatever the provider, preflight scrubs real cloud credentials (`AWS_*`, `ARM_*`, `AZURE_*`,
+`GOOGLE_*`) from terraform's environment, so a run can never touch a real account.
+
 ## Roadmap
 
 - **PR comments** - post the plan summary (with a link to the report artifact) directly to a
   pull request from CI mode.
-- **Multi-cloud** - Azure and GCP support alongside AWS, following whichever local emulator
-  each provider ecosystem standardizes on.
 
 ## Development
 
