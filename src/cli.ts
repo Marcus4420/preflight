@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import open from 'open'
 import { checkFlociInstalled, startFloci, stopFloci, getFlociEnv, waitForFlociReady } from './floci.js'
+import { PROVIDERS, detectProvider, scrubCloudCredentials, type ProviderId } from './providers.js'
 import { runPlan } from './terraform.js'
 import { startServer } from './server.js'
 import { exportStaticSite } from './staticExport.js'
@@ -11,27 +12,37 @@ Runs "terraform plan" against a local Floci emulator and visualizes the result.
 Run it from a directory containing your Terraform configuration.
 
 Options:
-  --ci           Headless mode for CI: write a static report instead of starting
-                 a server, and exit 1 if the plan contains any changes.
-  --out <dir>    Where --ci writes the report (default: preflight-report)
-  -h, --help     Show this help.
+  --provider <aws|azure|gcp>  Which Floci emulator to use. Detected from the
+                              Terraform config's provider blocks when omitted.
+  --ci                        Headless mode for CI: write a static report instead
+                              of starting a server, and exit 1 if the plan
+                              contains any changes.
+  --out <dir>                 Where --ci writes the report (default: preflight-report)
+  -h, --help                  Show this help.
 
 Environment variables:
   PREFLIGHT_EXTERNAL_FLOCI     Floci is managed externally (e.g. Docker Compose);
                                wait for it instead of starting it.
   PREFLIGHT_FLOCI_HEALTH_URL   Health endpoint to poll in external mode
-                               (default: http://localhost:4566/_floci/health)
+                               (default: the chosen provider's local endpoint)
   PREFLIGHT_NO_OPEN            Don't open the browser automatically.`
 
-function parseCliOptions(argv: string[]): { ci: boolean; outDir: string } {
+interface CliOptions {
+  ci: boolean
+  outDir: string
+  provider: ProviderId | null
+}
+
+function parseCliOptions(argv: string[]): CliOptions {
   if (argv.includes('-h') || argv.includes('--help')) {
     console.log(USAGE)
     process.exit(0)
   }
 
+  const valueFlags = ['--out', '--provider']
   const unknown = argv.filter((arg, i) => {
-    if (arg === '--ci' || arg === '--out') return false
-    if (argv[i - 1] === '--out') return false
+    if (arg === '--ci' || valueFlags.includes(arg)) return false
+    if (valueFlags.includes(argv[i - 1])) return false
     return true
   })
   if (unknown.length > 0) {
@@ -39,24 +50,38 @@ function parseCliOptions(argv: string[]): { ci: boolean; outDir: string } {
     process.exit(2)
   }
 
-  const outFlagIndex = argv.indexOf('--out')
-  const outDir = outFlagIndex !== -1 ? argv[outFlagIndex + 1] : 'preflight-report'
-  if (outFlagIndex !== -1 && (!outDir || outDir.startsWith('--'))) {
-    console.error(`--out requires a directory argument\n\n${USAGE}`)
+  const flagValue = (flag: string): string | undefined => {
+    const i = argv.indexOf(flag)
+    if (i === -1) return undefined
+    const value = argv[i + 1]
+    if (!value || value.startsWith('--')) {
+      console.error(`${flag} requires an argument\n\n${USAGE}`)
+      process.exit(2)
+    }
+    return value
+  }
+
+  const provider = flagValue('--provider') ?? null
+  if (provider !== null && !(provider in PROVIDERS)) {
+    console.error(`Unknown provider: ${provider} (expected aws, azure, or gcp)\n\n${USAGE}`)
     process.exit(2)
   }
 
-  return { ci: argv.includes('--ci'), outDir }
+  return {
+    ci: argv.includes('--ci'),
+    outDir: flagValue('--out') ?? 'preflight-report',
+    provider: provider as ProviderId | null,
+  }
 }
 
 const EXTERNAL_FLOCI = Boolean(process.env.PREFLIGHT_EXTERNAL_FLOCI)
 const NO_OPEN = Boolean(process.env.PREFLIGHT_NO_OPEN)
 const options = parseCliOptions(process.argv.slice(2))
 
-/** Gets Floci ready to use and returns a teardown function to call on exit. */
-async function ensureFloci(): Promise<() => Promise<void>> {
+/** Gets the provider's Floci emulator ready and returns a teardown function for exit. */
+async function ensureFloci(provider: (typeof PROVIDERS)[ProviderId]): Promise<() => Promise<void>> {
   if (EXTERNAL_FLOCI) {
-    const healthUrl = process.env.PREFLIGHT_FLOCI_HEALTH_URL ?? 'http://localhost:4566/_floci/health'
+    const healthUrl = process.env.PREFLIGHT_FLOCI_HEALTH_URL ?? provider.defaultHealthUrl
     console.log(`Waiting for Floci at ${healthUrl}...`)
     await waitForFlociReady(healthUrl)
     return async () => {} // Compose (or whatever started it) owns Floci's lifecycle, not us.
@@ -66,40 +91,43 @@ async function ensureFloci(): Promise<() => Promise<void>> {
     throw new Error('floci is not installed. Install it from https://floci.io, then try again.')
   }
 
-  console.log('Starting Floci...')
-  const weStartedFloci = await startFloci()
+  console.log(`Starting Floci (${provider.id})...`)
+  const weStartedFloci = await startFloci(provider)
   if (!weStartedFloci) console.log('Floci was already running, leaving it up on exit.')
 
   return async () => {
     if (!weStartedFloci) return
     console.log('Stopping Floci...')
-    await stopFloci().catch(() => {})
+    await stopFloci(provider).catch(() => {})
   }
 }
 
 /** Builds the environment terraform runs with, guaranteeing it can only ever talk to the
- * emulator. Any real AWS credentials present in the surrounding environment (common on CI
- * runners that also run apply jobs) are replaced with dummies, and an emulator endpoint is
- * required — otherwise terraform would silently plan against real AWS. */
-function emulatorOnlyEnv(base: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  if (!base.AWS_ENDPOINT_URL) {
+ * emulator: real cloud credentials are scrubbed, and for AWS (where the endpoint override
+ * travels via AWS_ENDPOINT_URL rather than the Terraform config) the endpoint must be set. */
+function emulatorOnlyEnv(base: NodeJS.ProcessEnv, providerId: ProviderId): NodeJS.ProcessEnv {
+  if (providerId === 'aws' && !base.AWS_ENDPOINT_URL) {
     throw new Error(
       'AWS_ENDPOINT_URL is not set, so terraform would talk to real AWS. ' +
         'Point it at the Floci emulator (e.g. http://localhost:4566).',
     )
   }
-
-  const env = { ...base }
-  delete env.AWS_PROFILE
-  delete env.AWS_SESSION_TOKEN
-  env.AWS_ACCESS_KEY_ID = 'test'
-  env.AWS_SECRET_ACCESS_KEY = 'test'
-  return env
+  return scrubCloudCredentials(base)
 }
 
 async function main() {
   const cwd = process.cwd()
-  const teardownFloci = await ensureFloci()
+
+  const providerId = options.provider ?? (await detectProvider(cwd))
+  if (!providerId) {
+    throw new Error(
+      `Could not detect a cloud provider from the Terraform config in ${cwd}. ` +
+        'Pass --provider aws|azure|gcp.',
+    )
+  }
+  const provider = PROVIDERS[providerId]
+
+  const teardownFloci = await ensureFloci(provider)
 
   let torndown = false
   const teardown = async () => {
@@ -109,9 +137,11 @@ async function main() {
   }
 
   try {
-    const env = emulatorOnlyEnv(
-      EXTERNAL_FLOCI ? { ...process.env } : { ...process.env, ...(await getFlociEnv()) },
-    )
+    const baseEnv =
+      EXTERNAL_FLOCI || !provider.useFlociEnv
+        ? { ...process.env }
+        : { ...process.env, ...(await getFlociEnv(provider)) }
+    const env = emulatorOnlyEnv(baseEnv, providerId)
 
     console.log('Running terraform plan...')
     const plan = await runPlan(cwd, env)

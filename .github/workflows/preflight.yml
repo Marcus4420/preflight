@@ -8,12 +8,35 @@ on:
 jobs:
   preflight:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - provider: aws
+            image: floci/floci:latest
+            port: 4566
+            example: wordpress-fargate
+            expected_add: 37
+          - provider: azure
+            image: floci/floci-az:latest
+            port: 4577
+            example: azure-app-stack
+            expected_add: 15
+          - provider: gcp
+            image: floci/floci-gcp:latest
+            port: 4588
+            example: gcp-pubsub-pipeline
+            expected_add: 9
+
+    name: preflight (${{ matrix.provider }})
 
     services:
       floci:
-        image: floci/floci:latest
+        image: ${{ matrix.image }}
         ports:
-          - 4566:4566
+          - ${{ matrix.port }}:${{ matrix.port }}
+        env:
+          FLOCI_AZ_TLS_ENABLED: "true" # only floci-az reads this; ignored by the others
 
     env:
       AWS_ENDPOINT_URL: http://localhost:4566
@@ -21,7 +44,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: test
       AWS_DEFAULT_REGION: us-east-1
       PREFLIGHT_EXTERNAL_FLOCI: "true"
-      PREFLIGHT_FLOCI_HEALTH_URL: http://localhost:4566/_floci/health
+      PREFLIGHT_FLOCI_HEALTH_URL: http://localhost:${{ matrix.port }}/
 
     steps:
       - uses: actions/checkout@v4
@@ -34,14 +57,21 @@ jobs:
         with:
           node-version: 22
 
+      - name: Trust the Azure emulator's TLS certificate
+        if: matrix.provider == 'azure'
+        run: |
+          curl -sf http://localhost:4577/_floci/tls-cert -o floci-az.crt
+          sudo cp floci-az.crt /usr/local/share/ca-certificates/
+          sudo update-ca-certificates
+
       - name: Build preflight
         run: |
           npm ci
           npm run build
 
-      - name: Run preflight against the example stack
-        working-directory: examples/wordpress-fargate
-        # The example plan creates 37 resources, so preflight exiting 1 is the
+      - name: Run preflight against the ${{ matrix.example }} example
+        working-directory: examples/${{ matrix.example }}
+        # Every example plan creates resources, so preflight exiting 1 is the
         # expected, correct behavior here - this step verifies exactly that.
         run: |
           set +e
@@ -56,7 +86,8 @@ jobs:
           test -f preflight-report/plan.json
           node -e "
             const plan = require('./preflight-report/plan.json');
-            if (plan.summary.add < 1) throw new Error('Expected resources to add');
+            const expected = ${{ matrix.expected_add }};
+            if (plan.summary.add !== expected) throw new Error('Expected ' + expected + ' adds, got ' + plan.summary.add);
             console.log('Report OK:', plan.summary.add, 'to add,', plan.nodes.length, 'nodes,', plan.edges.length, 'edges');
           "
 
@@ -64,5 +95,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: preflight-report
-          path: examples/wordpress-fargate/preflight-report/
+          name: preflight-report-${{ matrix.provider }}
+          path: examples/${{ matrix.example }}/preflight-report/

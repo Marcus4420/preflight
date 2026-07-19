@@ -108,6 +108,28 @@ If preflight runs in a pipeline that deploys for real (so real `AWS_ACCESS_KEY_I
    (per-step `env` on GitHub, protected variables or separate jobs on GitLab), not as
    pipeline-wide variables. The preflight job needs no secrets at all.
 
+## Azure and GCP
+
+The same pattern works with the other Floci emulators - swap the service container and drop
+the AWS variables:
+
+- **GCP**: `image: floci/floci-gcp:latest`, port `4588`. No extra setup; the example config
+  wires endpoints through provider `*_custom_endpoint` settings.
+- **Azure**: `image: floci/floci-az:latest`, port `4577`, with `FLOCI_AZ_TLS_ENABLED: "true"`
+  on the service. Trust the emulator's certificate before running preflight:
+
+  ```yaml
+  - name: Trust the Azure emulator's TLS certificate
+    run: |
+      curl -sf http://localhost:4577/_floci/tls-cert -o floci-az.crt
+      sudo cp floci-az.crt /usr/local/share/ca-certificates/
+      sudo update-ca-certificates
+  ```
+
+Set `PREFLIGHT_FLOCI_HEALTH_URL` to the emulator's base URL (e.g. `http://localhost:4588/`).
+This repo's own [preflight workflow](../.github/workflows/preflight.yml) runs a three-provider
+matrix and is the reference implementation.
+
 ## Notes
 
 - The Terraform config must target the emulator - see "Pointing Terraform at Floci" in the
