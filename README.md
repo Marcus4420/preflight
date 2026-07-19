@@ -89,7 +89,8 @@ npx terraform-preflight --ci --out preflight-report
 - Upload the report directory as a build artifact to give reviewers the clickable graph for
   every PR.
 
-Run `npx terraform-preflight --help` for all options.
+Run `npx terraform-preflight --help` for all options. Ready-made GitHub Actions and GitLab CI
+recipes live in [docs/ci.md](docs/ci.md).
 
 ## Roadmap
 
