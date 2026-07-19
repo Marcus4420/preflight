@@ -205,6 +205,104 @@ function CertificateIcon(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+function FunctionIcon(props: SVGProps<SVGSVGElement>) {
+  // Serverless function: a lambda-ish bolt in a rounded square.
+  return (
+    <Icon {...props}>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="3" />
+      <path d="M13 7l-4.5 5.5H12L10.5 17l4.5-5.5H12L13 7Z" />
+    </Icon>
+  )
+}
+
+function VmIcon(props: SVGProps<SVGSVGElement>) {
+  // Virtual machine: a monitor/host box with a power line.
+  return (
+    <Icon {...props}>
+      <rect x="3.5" y="4.5" width="17" height="12" rx="1.5" />
+      <path d="M9 20h6M12 16.5V20" />
+      <circle cx="12" cy="10.5" r="2.2" />
+    </Icon>
+  )
+}
+
+function KeyIcon(props: SVGProps<SVGSVGElement>) {
+  // Keys/secrets: KMS, Key Vault, Secret Manager.
+  return (
+    <Icon {...props}>
+      <circle cx="8" cy="9" r="4.5" />
+      <circle cx="8" cy="9" r="1.2" fill="currentColor" stroke="none" />
+      <path d="m11.5 12.5 8 8M17 18l2-2M14.5 15.5l2-2" />
+    </Icon>
+  )
+}
+
+function HelmIcon(props: SVGProps<SVGSVGElement>) {
+  // Managed Kubernetes: a ship's wheel.
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <path d="M12 6V3M12 21v-3M6 12H3M21 12h-3M7.8 7.8 5.7 5.7M18.3 18.3l-2.1-2.1M7.8 16.2l-2.1 2.1M18.3 5.7l-2.1 2.1" />
+    </Icon>
+  )
+}
+
+function RegistryIcon(props: SVGProps<SVGSVGElement>) {
+  // Container registry: a container box on shelves.
+  return (
+    <Icon {...props}>
+      <path d="M4 20h16M4 16h16" />
+      <rect x="6.5" y="4" width="11" height="8" rx="1" />
+      <path d="M9.5 4v8M14.5 4v8" />
+    </Icon>
+  )
+}
+
+function TopicIcon(props: SVGProps<SVGSVGElement>) {
+  // Pub/sub topic: one source fanning out to subscribers.
+  return (
+    <Icon {...props}>
+      <circle cx="5.5" cy="12" r="2" />
+      <circle cx="18.5" cy="5.5" r="2" />
+      <circle cx="18.5" cy="12" r="2" />
+      <circle cx="18.5" cy="18.5" r="2" />
+      <path d="M7.5 12h9M7.4 11 16.6 6.3M7.4 13l9.2 4.7" />
+    </Icon>
+  )
+}
+
+function ApiIcon(props: SVGProps<SVGSVGElement>) {
+  // API gateway/management: request/response brackets.
+  return (
+    <Icon {...props}>
+      <path d="m8 7-5 5 5 5M16 7l5 5-5 5" />
+      <path d="M13.5 5.5l-3 13" />
+    </Icon>
+  )
+}
+
+function GroupIcon(props: SVGProps<SVGSVGElement>) {
+  // Resource group / project: a labeled boundary around resources.
+  return (
+    <Icon {...props}>
+      <path d="M3.5 8V6a2 2 0 0 1 2-2h2M16.5 4h2a2 2 0 0 1 2 2v2M20.5 16v2a2 2 0 0 1-2 2h-2M7.5 20h-2a2 2 0 0 1-2-2v-2" />
+      <rect x="8" y="8" width="8" height="8" rx="1" />
+    </Icon>
+  )
+}
+
+function WebAppIcon(props: SVGProps<SVGSVGElement>) {
+  // App Service / Cloud Run: a browser window with an app inside.
+  return (
+    <Icon {...props}>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="1.5" />
+      <path d="M3.5 8.5h17M6 6.5h.01M8.5 6.5h.01" />
+      <path d="m9 13 2 2-2 2M13 17h3" />
+    </Icon>
+  )
+}
+
 interface ResourceTypeInfo {
   prefix: string
   icon: FC<SVGProps<SVGSVGElement>>
@@ -212,7 +310,21 @@ interface ResourceTypeInfo {
 }
 
 const RESOURCE_TYPES: ResourceTypeInfo[] = [
+  // ---- AWS ----
   { prefix: 'aws_vpc', icon: NetworkIcon, label: 'VPC' },
+  { prefix: 'aws_lambda', icon: FunctionIcon, label: 'Lambda' },
+  { prefix: 'aws_instance', icon: VmIcon, label: 'EC2 Instance' },
+  { prefix: 'aws_launch_template', icon: VmIcon, label: 'Launch Template' },
+  { prefix: 'aws_autoscaling_group', icon: VmIcon, label: 'Auto Scaling Group' },
+  { prefix: 'aws_kms', icon: KeyIcon, label: 'KMS Key' },
+  { prefix: 'aws_secretsmanager', icon: KeyIcon, label: 'Secrets Manager' },
+  { prefix: 'aws_ssm_parameter', icon: KeyIcon, label: 'SSM Parameter' },
+  { prefix: 'aws_eks', icon: HelmIcon, label: 'EKS' },
+  { prefix: 'aws_ecr', icon: RegistryIcon, label: 'ECR' },
+  { prefix: 'aws_sns', icon: TopicIcon, label: 'SNS Topic' },
+  { prefix: 'aws_api_gateway', icon: ApiIcon, label: 'API Gateway' },
+  { prefix: 'aws_apigatewayv2', icon: ApiIcon, label: 'API Gateway' },
+  { prefix: 'aws_elasticache', icon: DatabaseIcon, label: 'ElastiCache' },
   { prefix: 'aws_subnet', icon: SubnetIcon, label: 'Subnet' },
   { prefix: 'aws_internet_gateway', icon: GatewayIcon, label: 'Internet Gateway' },
   { prefix: 'aws_nat_gateway', icon: NatIcon, label: 'NAT Gateway' },
@@ -241,11 +353,103 @@ const RESOURCE_TYPES: ResourceTypeInfo[] = [
   { prefix: 'aws_cloudfront', icon: CdnIcon, label: 'CloudFront' },
   { prefix: 'aws_route53', icon: CompassIcon, label: 'Route53' },
   { prefix: 'aws_cloudwatch', icon: LogsIcon, label: 'CloudWatch Logs' },
+
+  // ---- Azure ----
+  { prefix: 'azurerm_resource_group', icon: GroupIcon, label: 'Resource Group' },
+  { prefix: 'azurerm_virtual_network', icon: NetworkIcon, label: 'Virtual Network' },
+  { prefix: 'azurerm_subnet', icon: SubnetIcon, label: 'Subnet' },
+  { prefix: 'azurerm_network_security', icon: FirewallIcon, label: 'Network Security Group' },
+  { prefix: 'azurerm_network_interface', icon: NetworkIcon, label: 'Network Interface' },
+  { prefix: 'azurerm_public_ip', icon: EipIcon, label: 'Public IP' },
+  { prefix: 'azurerm_nat_gateway', icon: NatIcon, label: 'NAT Gateway' },
+  { prefix: 'azurerm_route_table', icon: RouteTableIcon, label: 'Route Table' },
+  { prefix: 'azurerm_lb', icon: LoadBalancerIcon, label: 'Load Balancer' },
+  { prefix: 'azurerm_application_gateway', icon: LoadBalancerIcon, label: 'Application Gateway' },
+  { prefix: 'azurerm_storage', icon: BucketIcon, label: 'Storage' },
+  { prefix: 'azurerm_virtual_machine', icon: VmIcon, label: 'Virtual Machine' },
+  { prefix: 'azurerm_linux_virtual_machine', icon: VmIcon, label: 'Linux VM' },
+  { prefix: 'azurerm_windows_virtual_machine', icon: VmIcon, label: 'Windows VM' },
+  { prefix: 'azurerm_kubernetes', icon: HelmIcon, label: 'AKS' },
+  { prefix: 'azurerm_container_registry', icon: RegistryIcon, label: 'Container Registry' },
+  { prefix: 'azurerm_container', icon: ContainerIcon, label: 'Container' },
+  { prefix: 'azurerm_mssql', icon: DatabaseIcon, label: 'SQL Database' },
+  { prefix: 'azurerm_postgresql', icon: DatabaseIcon, label: 'PostgreSQL' },
+  { prefix: 'azurerm_mysql', icon: DatabaseIcon, label: 'MySQL' },
+  { prefix: 'azurerm_cosmosdb', icon: DatabaseIcon, label: 'Cosmos DB' },
+  { prefix: 'azurerm_redis', icon: DatabaseIcon, label: 'Redis Cache' },
+  { prefix: 'azurerm_key_vault', icon: KeyIcon, label: 'Key Vault' },
+  { prefix: 'azurerm_function_app', icon: FunctionIcon, label: 'Function App' },
+  { prefix: 'azurerm_linux_function_app', icon: FunctionIcon, label: 'Function App' },
+  { prefix: 'azurerm_windows_function_app', icon: FunctionIcon, label: 'Function App' },
+  { prefix: 'azurerm_app_service', icon: WebAppIcon, label: 'App Service' },
+  { prefix: 'azurerm_service_plan', icon: WebAppIcon, label: 'App Service Plan' },
+  { prefix: 'azurerm_linux_web_app', icon: WebAppIcon, label: 'Web App' },
+  { prefix: 'azurerm_windows_web_app', icon: WebAppIcon, label: 'Web App' },
+  { prefix: 'azurerm_servicebus', icon: QueueIcon, label: 'Service Bus' },
+  { prefix: 'azurerm_eventhub', icon: TopicIcon, label: 'Event Hub' },
+  { prefix: 'azurerm_eventgrid', icon: TopicIcon, label: 'Event Grid' },
+  { prefix: 'azurerm_dns', icon: CompassIcon, label: 'DNS' },
+  { prefix: 'azurerm_private_dns', icon: CompassIcon, label: 'Private DNS' },
+  { prefix: 'azurerm_cdn', icon: CdnIcon, label: 'CDN' },
+  { prefix: 'azurerm_frontdoor', icon: CdnIcon, label: 'Front Door' },
+  { prefix: 'azurerm_log_analytics', icon: LogsIcon, label: 'Log Analytics' },
+  { prefix: 'azurerm_monitor', icon: LogsIcon, label: 'Monitor' },
+  { prefix: 'azurerm_application_insights', icon: LogsIcon, label: 'App Insights' },
+  { prefix: 'azurerm_role_assignment', icon: ShieldIcon, label: 'Role Assignment' },
+  { prefix: 'azurerm_role_definition', icon: ShieldIcon, label: 'Role Definition' },
+  { prefix: 'azurerm_user_assigned_identity', icon: ShieldIcon, label: 'Managed Identity' },
+  { prefix: 'azurerm_api_management', icon: ApiIcon, label: 'API Management' },
+
+  // ---- Google Cloud ----
+  { prefix: 'google_project', icon: GroupIcon, label: 'Project' },
+  { prefix: 'google_compute_network', icon: NetworkIcon, label: 'VPC Network' },
+  { prefix: 'google_compute_subnetwork', icon: SubnetIcon, label: 'Subnetwork' },
+  { prefix: 'google_compute_firewall', icon: FirewallIcon, label: 'Firewall Rule' },
+  { prefix: 'google_compute_address', icon: EipIcon, label: 'Static IP' },
+  { prefix: 'google_compute_global_address', icon: EipIcon, label: 'Global IP' },
+  { prefix: 'google_compute_router_nat', icon: NatIcon, label: 'Cloud NAT' },
+  { prefix: 'google_compute_router', icon: RouteTableIcon, label: 'Cloud Router' },
+  { prefix: 'google_compute_route', icon: RouteTableIcon, label: 'Route' },
+  { prefix: 'google_compute_instance', icon: VmIcon, label: 'Compute Instance' },
+  { prefix: 'google_compute_instance_template', icon: VmIcon, label: 'Instance Template' },
+  { prefix: 'google_compute_instance_group', icon: VmIcon, label: 'Instance Group' },
+  { prefix: 'google_compute_backend_service', icon: LoadBalancerIcon, label: 'Backend Service' },
+  { prefix: 'google_compute_forwarding_rule', icon: LoadBalancerIcon, label: 'Forwarding Rule' },
+  { prefix: 'google_compute_global_forwarding_rule', icon: LoadBalancerIcon, label: 'Forwarding Rule' },
+  { prefix: 'google_compute_target_http', icon: TargetIcon, label: 'Target Proxy' },
+  { prefix: 'google_compute_target_https', icon: TargetIcon, label: 'Target Proxy' },
+  { prefix: 'google_compute_url_map', icon: RouteTableIcon, label: 'URL Map' },
+  { prefix: 'google_compute_health_check', icon: TargetIcon, label: 'Health Check' },
+  { prefix: 'google_compute_ssl_certificate', icon: CertificateIcon, label: 'SSL Certificate' },
+  { prefix: 'google_compute_managed_ssl_certificate', icon: CertificateIcon, label: 'SSL Certificate' },
+  { prefix: 'google_storage', icon: BucketIcon, label: 'Cloud Storage' },
+  { prefix: 'google_container_cluster', icon: HelmIcon, label: 'GKE Cluster' },
+  { prefix: 'google_container_node_pool', icon: HelmIcon, label: 'GKE Node Pool' },
+  { prefix: 'google_artifact_registry', icon: RegistryIcon, label: 'Artifact Registry' },
+  { prefix: 'google_sql', icon: DatabaseIcon, label: 'Cloud SQL' },
+  { prefix: 'google_spanner', icon: DatabaseIcon, label: 'Spanner' },
+  { prefix: 'google_firestore', icon: DatabaseIcon, label: 'Firestore' },
+  { prefix: 'google_bigtable', icon: DatabaseIcon, label: 'Bigtable' },
+  { prefix: 'google_bigquery', icon: DatabaseIcon, label: 'BigQuery' },
+  { prefix: 'google_redis', icon: DatabaseIcon, label: 'Memorystore' },
+  { prefix: 'google_pubsub', icon: TopicIcon, label: 'Pub/Sub' },
+  { prefix: 'google_cloudfunctions', icon: FunctionIcon, label: 'Cloud Function' },
+  { prefix: 'google_cloud_run', icon: WebAppIcon, label: 'Cloud Run' },
+  { prefix: 'google_cloud_tasks', icon: QueueIcon, label: 'Cloud Tasks' },
+  { prefix: 'google_cloud_scheduler', icon: QueueIcon, label: 'Cloud Scheduler' },
+  { prefix: 'google_dns', icon: CompassIcon, label: 'Cloud DNS' },
+  { prefix: 'google_kms', icon: KeyIcon, label: 'Cloud KMS' },
+  { prefix: 'google_secret_manager', icon: KeyIcon, label: 'Secret Manager' },
+  { prefix: 'google_service_account', icon: ShieldIcon, label: 'Service Account' },
+  { prefix: 'google_project_iam', icon: ShieldIcon, label: 'IAM' },
+  { prefix: 'google_logging', icon: LogsIcon, label: 'Cloud Logging' },
+  { prefix: 'google_monitoring', icon: LogsIcon, label: 'Cloud Monitoring' },
+  { prefix: 'google_api_gateway', icon: ApiIcon, label: 'API Gateway' },
 ]
 
 function prettifyResourceType(resourceType: string): string {
   return resourceType
-    .replace(/^aws_/, '')
+    .replace(/^(aws|azurerm|azuread|google)_/, '')
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
