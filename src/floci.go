@@ -88,6 +88,7 @@ func stopFloci(provider ProviderConfig) bool {
 	return true
 }
 
+// Add working dir to this as input eventually
 func getProviderConfig() ProviderConfig {
 	cwd, err := filepath.Abs("../examples/wordpress-fargate")
 	check(err)
